@@ -47,6 +47,9 @@ const (
 	NodeTypeParagraph
 	NodeTypeList
 	NodeTypeListElement
+	NodeTypeTable
+	NodeTypeTableRow
+	NodeTypeTableElement
 )
 
 type Node interface {
@@ -101,6 +104,33 @@ type Paragraph struct {
 func (p *Paragraph) Type() NodeType   { return NodeTypeParagraph }
 func (p *Paragraph) Children() []Node { return nil }
 
+var _ Node = (*Table)(nil)
+
+type Table struct {
+	rows []Node
+}
+
+func (t *Table) Type() NodeType   { return NodeTypeTable }
+func (t *Table) Children() []Node { return t.rows }
+
+var _ Node = (*TableRow)(nil)
+
+type TableRow struct {
+	elements []Node
+}
+
+func (tr *TableRow) Type() NodeType   { return NodeTypeTableRow }
+func (tr *TableRow) Children() []Node { return tr.elements }
+
+var _ Node = (*TableElement)(nil)
+
+type TableElement struct {
+	Text string
+}
+
+func (te *TableElement) Type() NodeType   { return NodeTypeTableElement }
+func (te *TableElement) Children() []Node { return nil }
+
 func dump(nodes []Node) {
 	for i := range nodes {
 		switch nodes[i].Type() {
@@ -114,6 +144,12 @@ func dump(nodes []Node) {
 			fmt.Println("List")
 		case NodeTypeListElement:
 			fmt.Printf("ListElement(lvl: %d, text: %s)\n", nodes[i].(*ListElement).Level, nodes[i].(*ListElement).Text)
+		case NodeTypeTable:
+			fmt.Println("Table")
+		case NodeTypeTableRow:
+			fmt.Println("TableRow")
+		case NodeTypeTableElement:
+			fmt.Printf("TableElement(text: %s)\n", nodes[i].(*TableElement).Text)
 		}
 
 		dump(nodes[i].Children())
@@ -201,6 +237,42 @@ func Parse(in string) Node {
 			})
 
 			// continue but dont increment
+			i--
+			continue
+		}
+
+		// table
+		tableStart := i
+		if strings.HasPrefix(lines[i], "|") {
+			for i < len(lines) && strings.HasPrefix(lines[i], "|") {
+				i++
+			}
+
+			tableRows := make([]Node, 0)
+			tableLines := lines[tableStart:i]
+
+			for j := range tableLines {
+				tableElements := make([]Node, 0)
+
+				// remove | from start and end
+				tableLine := tableLines[j][1 : len(tableLines[j])-1]
+				elems := strings.Split(tableLine, "|")
+
+				for k := range elems {
+					tableElements = append(tableElements, &TableElement{
+						Text: strings.TrimSpace(elems[k]),
+					})
+				}
+
+				tableRows = append(tableRows, &TableRow{
+					elements: tableElements,
+				})
+			}
+
+			doc.children = append(doc.children, &Table{
+				rows: tableRows,
+			})
+
 			i--
 			continue
 		}

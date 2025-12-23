@@ -684,3 +684,195 @@ func TestParseHeadingWithListComplex(t *testing.T) {
 		dumpForTest(t, want, got)
 	}
 }
+
+func TestParseTable(t *testing.T) {
+	input := "| Table |"
+	want := &Document{
+		children: []Node{
+			&Table{
+				rows: []Node{
+					&TableRow{
+						elements: []Node{
+							&TableElement{
+								Text: "Table",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	got := Parse(input)
+
+	if !reflect.DeepEqual(want, got) {
+		dumpForTest(t, want, got)
+	}
+}
+
+func TestParseTableTwoByTwo(t *testing.T) {
+	input := `| one | two |
+| three | four |`
+	want := &Document{
+		children: []Node{
+			&Table{
+				rows: []Node{
+					&TableRow{
+						elements: []Node{
+							&TableElement{
+								Text: "one",
+							},
+							&TableElement{
+								Text: "two",
+							},
+						},
+					},
+					&TableRow{
+						elements: []Node{
+							&TableElement{
+								Text: "three",
+							},
+							&TableElement{
+								Text: "four",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	got := Parse(input)
+
+	if !reflect.DeepEqual(want, got) {
+		dumpForTest(t, want, got)
+	}
+}
+
+func TestParseTableTwoByTwoMissingValue(t *testing.T) {
+	input := `| one | |
+| three | four |`
+	want := &Document{
+		children: []Node{
+			&Table{
+				rows: []Node{
+					&TableRow{
+						elements: []Node{
+							&TableElement{
+								Text: "one",
+							},
+							&TableElement{
+								Text: "",
+							},
+						},
+					},
+					&TableRow{
+						elements: []Node{
+							&TableElement{
+								Text: "three",
+							},
+							&TableElement{
+								Text: "four",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	got := Parse(input)
+
+	if !reflect.DeepEqual(want, got) {
+		dumpForTest(t, want, got)
+	}
+}
+
+func TestParseTableTwoByTwoMissingValueMoreWhitespace(t *testing.T) {
+	input := `| one |       |
+| three | four |`
+	want := &Document{
+		children: []Node{
+			&Table{
+				rows: []Node{
+					&TableRow{
+						elements: []Node{
+							&TableElement{
+								Text: "one",
+							},
+							&TableElement{
+								Text: "",
+							},
+						},
+					},
+					&TableRow{
+						elements: []Node{
+							&TableElement{
+								Text: "three",
+							},
+							&TableElement{
+								Text: "four",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	got := Parse(input)
+
+	if !reflect.DeepEqual(want, got) {
+		dumpForTest(t, want, got)
+	}
+}
+
+func TestParseTableWithHeading(t *testing.T) {
+	input := `# Header
+| table header a | table header b |
+| ----- | ----- |
+| element a | element b |`
+	want := &Document{
+		children: []Node{
+			&Heading{
+				Level: 1,
+				Text:  "Header",
+			},
+			&Table{
+				rows: []Node{
+					&TableRow{
+						elements: []Node{
+							&TableElement{
+								Text: "table header a",
+							},
+							&TableElement{
+								Text: "table header b",
+							},
+						},
+					},
+					&TableRow{
+						elements: []Node{
+							&TableElement{
+								Text: "-----",
+							},
+							&TableElement{
+								Text: "-----",
+							},
+						},
+					},
+					&TableRow{
+						elements: []Node{
+							&TableElement{
+								Text: "element a",
+							},
+							&TableElement{
+								Text: "element b",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	got := Parse(input)
+
+	if !reflect.DeepEqual(want, got) {
+		dumpForTest(t, want, got)
+	}
+}
