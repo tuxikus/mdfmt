@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -100,6 +101,26 @@ type Paragraph struct {
 func (p *Paragraph) Type() NodeType   { return NodeTypeParagraph }
 func (p *Paragraph) Children() []Node { return nil }
 
+func dump(nodes []Node) {
+	for i := range nodes {
+		switch nodes[i].Type() {
+		case NodeTypeDocument:
+			fmt.Println("Document:")
+		case NodeTypeHeading:
+			fmt.Printf("Heading(lvl: %d, text: %s)\n", nodes[i].(*Heading).Level, nodes[i].(*Heading).Text)
+		case NodeTypeParagraph:
+			fmt.Printf("Paragraph(text: %s)\n", nodes[i].(*Paragraph).Text)
+		case NodeTypeList:
+			fmt.Println("List")
+		case NodeTypeListElement:
+			fmt.Printf("ListElement(lvl: %d, text: %s)\n", nodes[i].(*ListElement).Level, nodes[i].(*ListElement).Text)
+		}
+
+		dump(nodes[i].Children())
+	}
+
+}
+
 func Parse(in string) Node {
 	doc := &Document{}
 
@@ -179,6 +200,8 @@ func Parse(in string) Node {
 				elements: listElements,
 			})
 
+			// continue but dont increment
+			i--
 			continue
 		}
 

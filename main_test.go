@@ -1,9 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
+
+func dumpForTest(t *testing.T, want, got Node) {
+	t.Error("Parse result does not match expected output")
+	fmt.Println("=== want ===")
+	dump(want.Children())
+	fmt.Println("=== got ===")
+	dump(got.Children())
+}
 
 func TestParseEmptyDocument(t *testing.T) {
 	input := ""
@@ -11,7 +20,7 @@ func TestParseEmptyDocument(t *testing.T) {
 	got := Parse(input)
 
 	if !reflect.DeepEqual(want, got) {
-		t.Errorf("want %s, got %s", want, got)
+		dumpForTest(t, want, got)
 	}
 }
 
@@ -28,7 +37,7 @@ func TestParseLevelOneHeading(t *testing.T) {
 	got := Parse(input)
 
 	if !reflect.DeepEqual(want, got) {
-		t.Errorf("want %s, got %s", want, got)
+		dumpForTest(t, want, got)
 	}
 }
 
@@ -45,7 +54,7 @@ func TestParseLevelTwoHeading(t *testing.T) {
 	got := Parse(input)
 
 	if !reflect.DeepEqual(want, got) {
-		t.Errorf("want %s, got %s", want, got)
+		dumpForTest(t, want, got)
 	}
 }
 
@@ -62,7 +71,7 @@ func TestParseLevel9Heading(t *testing.T) {
 	got := Parse(input)
 
 	if !reflect.DeepEqual(want, got) {
-		t.Errorf("want %s, got %s", want, got)
+		dumpForTest(t, want, got)
 	}
 }
 
@@ -78,7 +87,7 @@ func TestParseSingleLineParagraph(t *testing.T) {
 	got := Parse(input)
 
 	if !reflect.DeepEqual(want, got) {
-		t.Errorf("want %s, got %s", want, got)
+		dumpForTest(t, want, got)
 	}
 }
 
@@ -95,7 +104,7 @@ Bar Baz`
 	got := Parse(input)
 
 	if !reflect.DeepEqual(want, got) {
-		t.Errorf("want %s, got %s", want, got)
+		dumpForTest(t, want, got)
 	}
 }
 
@@ -117,7 +126,7 @@ Bar Baz`
 	got := Parse(input)
 
 	if !reflect.DeepEqual(want, got) {
-		t.Errorf("want %s, got %s", want, got)
+		dumpForTest(t, want, got)
 	}
 }
 
@@ -169,7 +178,7 @@ Second paragraph`
 	got := Parse(input)
 
 	if !reflect.DeepEqual(want, got) {
-		t.Errorf("want %s, got %s", want, got)
+		dumpForTest(t, want, got)
 	}
 }
 
@@ -190,7 +199,7 @@ func TestParseList(t *testing.T) {
 	got := Parse(input)
 
 	if !reflect.DeepEqual(want, got) {
-		t.Errorf("want %s, got %s", want, got)
+		dumpForTest(t, want, got)
 	}
 }
 
@@ -211,7 +220,7 @@ func TestParseListMoreHyphens(t *testing.T) {
 	got := Parse(input)
 
 	if !reflect.DeepEqual(want, got) {
-		t.Errorf("want %s, got %s", want, got)
+		dumpForTest(t, want, got)
 	}
 }
 
@@ -283,7 +292,7 @@ func TestParseLongList(t *testing.T) {
 	got := Parse(input)
 
 	if !reflect.DeepEqual(want, got) {
-		t.Errorf("want %s, got %s", want, got)
+		dumpForTest(t, want, got)
 	}
 }
 
@@ -309,7 +318,7 @@ func TestParseMultiLevelList(t *testing.T) {
 	got := Parse(input)
 
 	if !reflect.DeepEqual(want, got) {
-		t.Errorf("want %s, got %s", want, got)
+		dumpForTest(t, want, got)
 	}
 }
 
@@ -370,7 +379,7 @@ func TestParseMultiLevelListLong(t *testing.T) {
 	got := Parse(input)
 
 	if !reflect.DeepEqual(want, got) {
-		t.Errorf("want %s, got %s", want, got)
+		dumpForTest(t, want, got)
 	}
 }
 
@@ -516,6 +525,162 @@ func TestParseMultiLevelListLongComplex(t *testing.T) {
 	got := Parse(input)
 
 	if !reflect.DeepEqual(want, got) {
-		t.Errorf("want %s, got %s", want, got)
+		dumpForTest(t, want, got)
+	}
+}
+
+func TestParseHeadingWithList(t *testing.T) {
+	input := `# Heading
+
+- element 1
+- element 2
+- element 3
+`
+
+	want := &Document{
+		children: []Node{
+			&Heading{
+				Level: 1,
+				Text:  "Heading",
+			},
+			&List{
+				elements: []Node{
+					&ListElement{
+						Level: 1,
+						Text:  "element 1",
+					},
+					&ListElement{
+						Level: 1,
+						Text:  "element 2",
+					},
+					&ListElement{
+						Level: 1,
+						Text:  "element 3",
+					},
+				},
+			},
+		},
+	}
+	got := Parse(input)
+
+	if !reflect.DeepEqual(want, got) {
+		dumpForTest(t, want, got)
+	}
+}
+
+func TestParseHeadingWithListNoNL(t *testing.T) {
+	input := `# Heading
+- element 1
+- element 2
+- element 3
+`
+
+	want := &Document{
+		children: []Node{
+			&Heading{
+				Level: 1,
+				Text:  "Heading",
+			},
+			&List{
+				elements: []Node{
+					&ListElement{
+						Level: 1,
+						Text:  "element 1",
+					},
+					&ListElement{
+						Level: 1,
+						Text:  "element 2",
+					},
+					&ListElement{
+						Level: 1,
+						Text:  "element 3",
+					},
+				},
+			},
+		},
+	}
+	got := Parse(input)
+
+	if !reflect.DeepEqual(want, got) {
+		dumpForTest(t, want, got)
+	}
+}
+
+func TestParseHeadingWithListComplex(t *testing.T) {
+	input := `# Heading
+
+- element 1
+- element 2
+- element 3
+
+## Next heading
+- element 1
+### The lvl 3 heading
+
+- foo
+  - bar
+    - baz
+`
+
+	want := &Document{
+		children: []Node{
+			&Heading{
+				Level: 1,
+				Text:  "Heading",
+			},
+			&List{
+				elements: []Node{
+					&ListElement{
+						Level: 1,
+						Text:  "element 1",
+					},
+					&ListElement{
+						Level: 1,
+						Text:  "element 2",
+					},
+					&ListElement{
+						Level: 1,
+						Text:  "element 3",
+					},
+				},
+			},
+			&Heading{
+				Level: 2,
+				Text:  "Next heading",
+			},
+			&List{
+				elements: []Node{
+					&ListElement{
+						Level: 1,
+						Text:  "element 1",
+					},
+				},
+			},
+			&Heading{
+				Level: 3,
+				Text:  "The lvl 3 heading",
+			},
+			&List{
+				elements: []Node{
+					&ListElement{
+						Level: 1,
+						Text:  "foo",
+					},
+					&ListElement{
+						Level: 2,
+						Text:  "bar",
+					},
+					&ListElement{
+						Level: 3,
+						Text:  "baz",
+					},
+				},
+			},
+		},
+	}
+	got := Parse(input)
+
+	if !reflect.DeepEqual(want, got) {
+		dumpForTest(t, want, got)
 	}
 }
