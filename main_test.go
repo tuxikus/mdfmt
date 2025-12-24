@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -12,6 +13,15 @@ func dumpForTest(t *testing.T, want, got Node) {
 	dump(want.Children())
 	fmt.Println("=== got ===")
 	dump(got.Children())
+}
+
+func printFmtForTest(t *testing.T, want, got string, parsed Node) {
+	t.Error("Want != got")
+	fmt.Println("=== want ===")
+	fmt.Println(want)
+	fmt.Println("=== got ===")
+	fmt.Println(got)
+	dump(parsed.Children())
 }
 
 func TestParseEmptyDocument(t *testing.T) {
@@ -874,5 +884,155 @@ func TestParseTableWithHeading(t *testing.T) {
 
 	if !reflect.DeepEqual(want, got) {
 		dumpForTest(t, want, got)
+	}
+}
+
+func TestFmtHeadingWithParagraph(t *testing.T) {
+	input := `# header
+some text`
+	want := `# header
+
+some text`
+
+	parsed := Parse(input)
+	sb := strings.Builder{}
+	sb = Fmt(sb, parsed.Children())
+	got := sb.String()
+
+	if want != got {
+		printFmtForTest(t, want, got, parsed)
+	}
+}
+
+func TestFmtHeadingWithTwoParagraphs(t *testing.T) {
+	input := `# header
+some text
+
+
+
+
+even more text`
+	want := `# header
+
+some text
+
+even more text`
+
+	parsed := Parse(input)
+	sb := strings.Builder{}
+	sb = Fmt(sb, parsed.Children())
+	got := sb.String()
+
+	if want != got {
+		printFmtForTest(t, want, got, parsed)
+	}
+}
+
+func TestFmtHeadingWithLongParagraph(t *testing.T) {
+	input := `# Heading
+
+Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.`
+	want := `# Heading
+
+Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.`
+
+	parsed := Parse(input)
+	sb := strings.Builder{}
+	sb = Fmt(sb, parsed.Children())
+	got := sb.String()
+
+	if want != got {
+		printFmtForTest(t, want, got, parsed)
+	}
+}
+
+func TestFmtHeadingWithMoreLongParagraphs(t *testing.T) {
+	input := `# Heading
+Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
+
+
+
+
+
+
+
+Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
+
+
+
+Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.`
+	want := `# Heading
+
+Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
+
+Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
+
+Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.`
+	parsed := Parse(input)
+	sb := strings.Builder{}
+	sb = Fmt(sb, parsed.Children())
+	got := sb.String()
+
+	if want != got {
+		printFmtForTest(t, want, got, parsed)
+	}
+}
+
+func TestFmtHeadingWithWrappedParagraph(t *testing.T) {
+	input := `# Heading
+Lorem ipsum dolor sit amet consectetur adipiscing elit.
+Quisque faucibus ex sapien vitae pellentesque sem
+placerat. In id cursus mi pretium tellus duis convallis.
+Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus
+fringilla lacus nec metus bibendum egestas. Iaculis massa
+nisl malesuada lacinia integer nunc posuere. Ut hendrerit
+semper vel class aptent taciti sociosqu. Ad litora torquent
+per conubia nostra inceptos himenaeos.`
+	want := `# Heading
+
+Lorem ipsum dolor sit amet consectetur adipiscing elit.
+Quisque faucibus ex sapien vitae pellentesque sem
+placerat. In id cursus mi pretium tellus duis convallis.
+Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus
+fringilla lacus nec metus bibendum egestas. Iaculis massa
+nisl malesuada lacinia integer nunc posuere. Ut hendrerit
+semper vel class aptent taciti sociosqu. Ad litora torquent
+per conubia nostra inceptos himenaeos.`
+
+	parsed := Parse(input)
+	sb := strings.Builder{}
+	sb = Fmt(sb, parsed.Children())
+	got := sb.String()
+
+	if want != got {
+		printFmtForTest(t, want, got, parsed)
+	}
+}
+
+func TestFmtHeadingsWithParagraphs(t *testing.T) {
+	input := `# header
+some text
+
+more text
+
+## next heading
+with a paragraph`
+	want := `# header
+
+some text
+
+more text
+
+## next heading
+
+with a paragraph`
+
+	parsed := Parse(input)
+	sb := strings.Builder{}
+	sb = Fmt(sb, parsed.Children())
+	got := sb.String()
+
+	if want != got {
+		printFmtForTest(t, want, got, parsed)
 	}
 }

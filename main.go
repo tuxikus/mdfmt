@@ -291,6 +291,42 @@ func Parse(in string) Node {
 	return doc
 }
 
-func main() {
+func Fmt(sb strings.Builder, nodes []Node) strings.Builder {
+	for _, node := range nodes {
+		switch node.Type() {
+		case NodeTypeHeading:
+			headingHashes := strings.Repeat("#", node.(*Heading).Level)
+			sb.WriteString(headingHashes)
+			sb.WriteString(" ")
+			sb.WriteString(node.(*Heading).Text)
+		case NodeTypeParagraph:
+			sb.WriteString(node.(*Paragraph).Text)
+		case NodeTypeList:
+		case NodeTypeListElement:
+		case NodeTypeTable:
+		case NodeTypeTableRow:
+		case NodeTypeTableElement:
+		}
 
+		sb.WriteString("\n\n")
+
+		Fmt(sb, node.Children())
+	}
+
+	// trim \n\n
+	temp := sb.String()
+	sb.Reset()
+	sb.WriteString(temp[:len(temp)-2])
+
+	return sb
+}
+
+func main() {
+	doc := `# header
+some text`
+
+	parsed := Parse(doc)
+	sb := strings.Builder{}
+	sb = Fmt(sb, parsed.Children())
+	fmt.Println(sb.String())
 }
