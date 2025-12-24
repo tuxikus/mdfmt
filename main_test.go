@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"reflect"
-	"strings"
 	"testing"
 )
 
@@ -895,9 +894,7 @@ some text`
 some text`
 
 	parsed := Parse(input)
-	sb := strings.Builder{}
-	sb = Fmt(sb, parsed.Children())
-	got := sb.String()
+	got := Fmt(Parse(input))
 
 	if want != got {
 		printFmtForTest(t, want, got, parsed)
@@ -919,9 +916,7 @@ some text
 even more text`
 
 	parsed := Parse(input)
-	sb := strings.Builder{}
-	sb = Fmt(sb, parsed.Children())
-	got := sb.String()
+	got := Fmt(Parse(input))
 
 	if want != got {
 		printFmtForTest(t, want, got, parsed)
@@ -937,9 +932,7 @@ Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapi
 Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.`
 
 	parsed := Parse(input)
-	sb := strings.Builder{}
-	sb = Fmt(sb, parsed.Children())
-	got := sb.String()
+	got := Fmt(Parse(input))
 
 	if want != got {
 		printFmtForTest(t, want, got, parsed)
@@ -968,10 +961,9 @@ Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapi
 Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
 
 Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.`
+
 	parsed := Parse(input)
-	sb := strings.Builder{}
-	sb = Fmt(sb, parsed.Children())
-	got := sb.String()
+	got := Fmt(Parse(input))
 
 	if want != got {
 		printFmtForTest(t, want, got, parsed)
@@ -1000,9 +992,7 @@ semper vel class aptent taciti sociosqu. Ad litora torquent
 per conubia nostra inceptos himenaeos.`
 
 	parsed := Parse(input)
-	sb := strings.Builder{}
-	sb = Fmt(sb, parsed.Children())
-	got := sb.String()
+	got := Fmt(Parse(input))
 
 	if want != got {
 		printFmtForTest(t, want, got, parsed)
@@ -1028,9 +1018,7 @@ more text
 with a paragraph`
 
 	parsed := Parse(input)
-	sb := strings.Builder{}
-	sb = Fmt(sb, parsed.Children())
-	got := sb.String()
+	got := Fmt(Parse(input))
 
 	if want != got {
 		printFmtForTest(t, want, got, parsed)

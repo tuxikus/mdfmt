@@ -291,7 +291,14 @@ func Parse(in string) Node {
 	return doc
 }
 
-func Fmt(sb strings.Builder, nodes []Node) strings.Builder {
+func Fmt(document Node) string {
+	sb := strings.Builder{}
+	format(&sb, document.Children())
+	formatted := sb.String()
+	return formatted[:len(formatted)-2]
+}
+
+func format(sb *strings.Builder, nodes []Node) {
 	for _, node := range nodes {
 		switch node.Type() {
 		case NodeTypeHeading:
@@ -310,15 +317,8 @@ func Fmt(sb strings.Builder, nodes []Node) strings.Builder {
 
 		sb.WriteString("\n\n")
 
-		Fmt(sb, node.Children())
+		format(sb, node.Children())
 	}
-
-	// trim \n\n
-	temp := sb.String()
-	sb.Reset()
-	sb.WriteString(temp[:len(temp)-2])
-
-	return sb
 }
 
 func main() {
@@ -326,7 +326,6 @@ func main() {
 some text`
 
 	parsed := Parse(doc)
-	sb := strings.Builder{}
-	sb = Fmt(sb, parsed.Children())
-	fmt.Println(sb.String())
+	formatted := Fmt(parsed)
+	fmt.Println(formatted)
 }
