@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"strings"
 )
 
@@ -47,6 +49,7 @@ const (
 	NodeTypeParagraph
 	NodeTypeList
 	NodeTypeListElement
+	NodeTypeListEnd
 	NodeTypeTable
 	NodeTypeTableRow
 	NodeTypeTableElement
@@ -94,6 +97,13 @@ type ListElement struct {
 
 func (le *ListElement) Type() NodeType   { return NodeTypeListElement }
 func (le *ListElement) Children() []Node { return nil }
+
+var _ Node = (*ListEnd)(nil)
+
+type ListEnd struct{}
+
+func (le *ListEnd) Type() NodeType   { return NodeTypeListEnd }
+func (le *ListEnd) Children() []Node { return nil }
 
 var _ Node = (*Paragraph)(nil)
 
@@ -212,7 +222,7 @@ func Parse(in string) Node {
 			}
 
 			for _, listLine := range listLines {
-				lvl := 1
+				lvl := 0
 				for j := range listLine {
 					if listLine[j] == '-' {
 						break
@@ -235,6 +245,8 @@ func Parse(in string) Node {
 			doc.children = append(doc.children, &List{
 				elements: listElements,
 			})
+
+			doc.children = append(doc.children, &ListEnd{})
 
 			// continue but dont increment
 			i--
@@ -279,13 +291,17 @@ func Parse(in string) Node {
 
 		// paragraph
 		paragraphStart := i
-		for i < len(lines) && strings.TrimSpace(lines[i]) != "" {
+		for i < len(lines) &&
+			!(strings.TrimSpace(lines[i]) == "" ||
+				strings.HasPrefix(lines[i], "-")) {
 			i++
 		}
 
 		doc.children = append(doc.children, &Paragraph{
 			Text: strings.Join(lines[paragraphStart:i], "\n"),
 		})
+
+		i--
 	}
 
 	return doc
@@ -295,7 +311,12 @@ func Fmt(document Node) string {
 	sb := strings.Builder{}
 	format(&sb, document.Children())
 	formatted := sb.String()
-	return formatted[:len(formatted)-2]
+
+	if formatted[len(formatted)-2:] == "\n\n" {
+		return formatted[:len(formatted)-2]
+	}
+
+	return formatted
 }
 
 func format(sb *strings.Builder, nodes []Node) {
@@ -306,26 +327,142 @@ func format(sb *strings.Builder, nodes []Node) {
 			sb.WriteString(headingHashes)
 			sb.WriteString(" ")
 			sb.WriteString(node.(*Heading).Text)
+			sb.WriteString("\n\n")
 		case NodeTypeParagraph:
 			sb.WriteString(node.(*Paragraph).Text)
+			sb.WriteString("\n\n")
 		case NodeTypeList:
 		case NodeTypeListElement:
+			if node.(*ListElement).Level != 1 {
+				for i := 1; i < node.(*ListElement).Level; i++ {
+					sb.WriteString("  ")
+				}
+			}
+			sb.WriteString("- ")
+			sb.WriteString(node.(*ListElement).Text)
+			sb.WriteString("\n")
+		case NodeTypeListEnd:
+			sb.WriteString("\n")
 		case NodeTypeTable:
+			formatTable(sb, node.(*Table))
 		case NodeTypeTableRow:
 		case NodeTypeTableElement:
 		}
-
-		sb.WriteString("\n\n")
 
 		format(sb, node.Children())
 	}
 }
 
-func main() {
-	doc := `# header
-some text`
+func formatTable(sb *strings.Builder, table *Table) {
+	if len(table.rows) == 0 {
+		return
+	}
 
-	parsed := Parse(doc)
+	rows := make([][]string, 0, len(table.rows))
+	for _, rowNode := range table.rows {
+		row := rowNode.(*TableRow)
+		elements := make([]string, 0, len(row.elements))
+		for _, elemNode := range row.elements {
+			elem := elemNode.(*TableElement)
+			elements = append(elements, elem.Text)
+		}
+		rows = append(rows, elements)
+	}
+
+	maxCols := 0
+	for _, row := range rows {
+		if len(row) > maxCols {
+			maxCols = len(row)
+		}
+	}
+
+	if maxCols == 0 {
+		return
+	}
+
+	isSeparatorRow := func(row []string) bool {
+		if len(row) == 0 {
+			return false
+		}
+
+		for _, cell := range row {
+			trimmed := strings.TrimSpace(cell)
+
+			hasNonDash := false
+			for _, r := range trimmed {
+				// check for dashes only
+				if r != '-' && r != ' ' && r != ':' {
+					hasNonDash = true
+					break
+				}
+			}
+
+			if hasNonDash {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	// remove separator line
+	dataRows := make([][]string, 0)
+	for _, row := range rows {
+		if isSeparatorRow(row) {
+			continue
+		}
+
+		dataRows = append(dataRows, row)
+	}
+
+	// calculate column widths from data rows
+	colWidths := make([]int, maxCols)
+	for _, row := range dataRows {
+		for i := 0; i < len(row) && i < maxCols; i++ {
+			if len(row[i]) > colWidths[i] {
+				colWidths[i] = len(row[i])
+			}
+		}
+	}
+
+	for rowIdx, row := range dataRows {
+		sb.WriteString("|")
+		for i := 0; i < maxCols; i++ {
+			var cellText string
+			if i < len(row) {
+				cellText = row[i]
+			}
+
+			padded := cellText + strings.Repeat(" ", colWidths[i]-len(cellText))
+			sb.WriteString(" ")
+			sb.WriteString(padded)
+			sb.WriteString(" |")
+		}
+
+		sb.WriteString("\n")
+
+		if rowIdx == 0 && len(dataRows) > 1 {
+			sb.WriteString("|")
+			for i := 0; i < maxCols; i++ {
+				sb.WriteString(" ")
+				sb.WriteString(strings.Repeat("-", colWidths[i]))
+				sb.WriteString(" |")
+			}
+			sb.WriteString("\n")
+		}
+	}
+
+	sb.WriteString("\n")
+}
+
+func main() {
+	in, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		panic(err)
+	}
+
+	parsed := Parse(string(in))
 	formatted := Fmt(parsed)
+	//dump(parsed.Children())
 	fmt.Println(formatted)
 }

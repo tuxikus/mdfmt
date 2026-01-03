@@ -203,6 +203,7 @@ func TestParseList(t *testing.T) {
 					},
 				},
 			},
+			&ListEnd{},
 		},
 	}
 	got := Parse(input)
@@ -224,6 +225,7 @@ func TestParseListMoreHyphens(t *testing.T) {
 					},
 				},
 			},
+			&ListEnd{},
 		},
 	}
 	got := Parse(input)
@@ -295,6 +297,7 @@ func TestParseLongList(t *testing.T) {
 					},
 				},
 			},
+			&ListEnd{},
 		},
 	}
 
@@ -322,6 +325,7 @@ func TestParseMultiLevelList(t *testing.T) {
 					},
 				},
 			},
+			&ListEnd{},
 		},
 	}
 	got := Parse(input)
@@ -383,6 +387,7 @@ func TestParseMultiLevelListLong(t *testing.T) {
 					},
 				},
 			},
+			&ListEnd{},
 		},
 	}
 	got := Parse(input)
@@ -529,6 +534,7 @@ func TestParseMultiLevelListLongComplex(t *testing.T) {
 					},
 				},
 			},
+			&ListEnd{},
 		},
 	}
 	got := Parse(input)
@@ -568,6 +574,7 @@ func TestParseHeadingWithList(t *testing.T) {
 					},
 				},
 			},
+			&ListEnd{},
 		},
 	}
 	got := Parse(input)
@@ -606,6 +613,7 @@ func TestParseHeadingWithListNoNL(t *testing.T) {
 					},
 				},
 			},
+			&ListEnd{},
 		},
 	}
 	got := Parse(input)
@@ -653,6 +661,7 @@ func TestParseHeadingWithListComplex(t *testing.T) {
 					},
 				},
 			},
+			&ListEnd{},
 			&Heading{
 				Level: 2,
 				Text:  "Next heading",
@@ -665,6 +674,7 @@ func TestParseHeadingWithListComplex(t *testing.T) {
 					},
 				},
 			},
+			&ListEnd{},
 			&Heading{
 				Level: 3,
 				Text:  "The lvl 3 heading",
@@ -685,6 +695,7 @@ func TestParseHeadingWithListComplex(t *testing.T) {
 					},
 				},
 			},
+			&ListEnd{},
 		},
 	}
 	got := Parse(input)
@@ -1016,6 +1027,129 @@ more text
 ## next heading
 
 with a paragraph`
+
+	parsed := Parse(input)
+	got := Fmt(Parse(input))
+
+	if want != got {
+		printFmtForTest(t, want, got, parsed)
+	}
+}
+
+func TestFmtTableSimple(t *testing.T) {
+	input := `| one | two |`
+	want := `| one | two |`
+
+	parsed := Parse(input)
+	got := Fmt(Parse(input))
+
+	if want != got {
+		printFmtForTest(t, want, got, parsed)
+	}
+}
+
+func TestFmtTableTwoRows(t *testing.T) {
+	input := `| one | two |
+| three | four |`
+	want := `| one   | two  |
+| ----- | ---- |
+| three | four |`
+
+	parsed := Parse(input)
+	got := Fmt(Parse(input))
+
+	if want != got {
+		printFmtForTest(t, want, got, parsed)
+	}
+}
+
+func TestFmtTableWithSeparator(t *testing.T) {
+	input := `| header a | header b |
+| ----- | ----- |
+| element a | element b |`
+	want := `| header a  | header b  |
+| --------- | --------- |
+| element a | element b |`
+
+	parsed := Parse(input)
+	got := Fmt(Parse(input))
+
+	if want != got {
+		printFmtForTest(t, want, got, parsed)
+	}
+}
+
+func TestFmtTableThreeColumns(t *testing.T) {
+	input := `| col1 | col2 | col3 |
+| val1 | val2 | val3 |
+| a | b | c |`
+	want := `| col1 | col2 | col3 |
+| ---- | ---- | ---- |
+| val1 | val2 | val3 |
+| a    | b    | c    |`
+
+	parsed := Parse(input)
+	got := Fmt(Parse(input))
+
+	if want != got {
+		printFmtForTest(t, want, got, parsed)
+	}
+}
+
+func TestFmtTableUnevenColumns(t *testing.T) {
+	input := `| short | very long column | medium |
+| a | b | c |`
+	want := `| short | very long column | medium |
+| ----- | ---------------- | ------ |
+| a     | b                | c      |`
+
+	parsed := Parse(input)
+	got := Fmt(Parse(input))
+
+	if want != got {
+		printFmtForTest(t, want, got, parsed)
+	}
+}
+
+func TestFmtTableWithEmptyCells(t *testing.T) {
+	input := `| one | two | three |
+| a | | c |`
+	want := `| one | two | three |
+| --- | --- | ----- |
+| a   |     | c     |`
+
+	parsed := Parse(input)
+	got := Fmt(Parse(input))
+
+	if want != got {
+		printFmtForTest(t, want, got, parsed)
+	}
+}
+
+func TestFmtTableWithHeading(t *testing.T) {
+	input := `# Header
+| col1 | col2 |
+| val1 | val2 |`
+	want := `# Header
+
+| col1 | col2 |
+| ---- | ---- |
+| val1 | val2 |`
+
+	parsed := Parse(input)
+	got := Fmt(Parse(input))
+
+	if want != got {
+		printFmtForTest(t, want, got, parsed)
+	}
+}
+
+func TestFmtTableMisalignedInput(t *testing.T) {
+	input := `|short|very long column|medium|
+|a|b|c|`
+	want := `| short | very long column | medium |
+| ----- | ---------------- | ------ |
+| a     | b                | c      |`
 
 	parsed := Parse(input)
 	got := Fmt(Parse(input))
